@@ -33,6 +33,7 @@ import io.trino.execution.TaskInfo;
 import io.trino.execution.TaskState;
 import io.trino.execution.TaskStatus;
 import io.trino.execution.buffer.SpoolingOutputStats;
+import io.trino.operator.RetryPolicy;
 
 import java.net.URI;
 import java.util.Optional;
@@ -81,6 +82,8 @@ public class TaskInfoFetcher
 
     private final AtomicReference<SpoolingOutputStats.Snapshot> spoolingOutputStats = new AtomicReference<>();
 
+    private final RetryPolicy retryPolicy;
+
     @GuardedBy("this")
     private boolean running;
 
@@ -104,7 +107,8 @@ public class TaskInfoFetcher
             ScheduledExecutorService updateScheduledExecutor,
             ScheduledExecutorService errorScheduledExecutor,
             RemoteTaskStats stats,
-            Optional<DataSize> estimatedMemory)
+            Optional<DataSize> estimatedMemory,
+            RetryPolicy retryPolicy)
     {
         requireNonNull(initialTask, "initialTask is null");
         requireNonNull(errorScheduledExecutor, "errorScheduledExecutor is null");
@@ -127,6 +131,7 @@ public class TaskInfoFetcher
         this.spanBuilderFactory = requireNonNull(spanBuilderFactory, "spanBuilderFactory is null");
         this.stats = requireNonNull(stats, "stats is null");
         this.estimatedMemory = requireNonNull(estimatedMemory, "estimatedMemory is null");
+        this.retryPolicy = retryPolicy;
     }
 
     public TaskInfo getTaskInfo()
@@ -268,7 +273,7 @@ public class TaskInfoFetcher
 
         if (newTaskInfo.getTaskStatus().getState().isDone()) {
             boolean wasSet = spoolingOutputStats.compareAndSet(null, newTaskInfo.getOutputBuffers().getSpoolingOutputStats().orElse(null));
-            if (wasSet && spoolingOutputStats.get() == null) {
+            if (retryPolicy == RetryPolicy.TASK && wasSet && spoolingOutputStats.get() == null) {
                 log.debug("Task %s was updated to null spoolingOutputStats. Future calls to retrieveAndDropSpoolingOutputStats will fail.", taskId);
             }
             newTaskInfo = newTaskInfo.pruneSpoolingOutputStats();

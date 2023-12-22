@@ -39,6 +39,7 @@ import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.trino.Session;
+import io.trino.SystemSessionProperties;
 import io.trino.execution.DynamicFiltersCollector;
 import io.trino.execution.DynamicFiltersCollector.VersionedDynamicFilterDomains;
 import io.trino.execution.ExecutionFailureInfo;
@@ -58,6 +59,7 @@ import io.trino.execution.buffer.PipelinedBufferInfo;
 import io.trino.execution.buffer.PipelinedOutputBuffers;
 import io.trino.execution.buffer.SpoolingOutputStats;
 import io.trino.metadata.Split;
+import io.trino.operator.RetryPolicy;
 import io.trino.operator.TaskStats;
 import io.trino.server.DynamicFilterService;
 import io.trino.server.FailTaskRequest;
@@ -343,6 +345,7 @@ public final class HttpRemoteTask
                     errorScheduledExecutor,
                     stats);
 
+            RetryPolicy retryPolicy = SystemSessionProperties.getRetryPolicy(session);
             this.taskInfoFetcher = new TaskInfoFetcher(
                     this::fatalUnacknowledgedFailure,
                     taskStatusFetcher,
@@ -357,7 +360,8 @@ public final class HttpRemoteTask
                     updateScheduledExecutor,
                     errorScheduledExecutor,
                     stats,
-                    estimatedMemory);
+                    estimatedMemory,
+                    retryPolicy);
 
             taskStatusFetcher.addStateChangeListener(newStatus -> {
                 TaskState state = newStatus.getState();
