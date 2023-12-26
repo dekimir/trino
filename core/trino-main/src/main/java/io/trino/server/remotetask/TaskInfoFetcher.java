@@ -131,7 +131,7 @@ public class TaskInfoFetcher
         this.spanBuilderFactory = requireNonNull(spanBuilderFactory, "spanBuilderFactory is null");
         this.stats = requireNonNull(stats, "stats is null");
         this.estimatedMemory = requireNonNull(estimatedMemory, "estimatedMemory is null");
-        this.retryPolicy = retryPolicy;
+        this.retryPolicy = requireNonNull(retryPolicy, "retryPolicy is null");
     }
 
     public TaskInfo getTaskInfo()
