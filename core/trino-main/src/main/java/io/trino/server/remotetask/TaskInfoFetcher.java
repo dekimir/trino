@@ -53,6 +53,7 @@ import static io.airlift.http.client.FullJsonResponseHandler.createFullJsonRespo
 import static io.airlift.http.client.HttpUriBuilder.uriBuilderFrom;
 import static io.airlift.http.client.Request.Builder.prepareGet;
 import static io.airlift.units.Duration.nanosSince;
+import static io.trino.operator.RetryPolicy.TASK;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -273,7 +274,7 @@ public class TaskInfoFetcher
 
         if (newTaskInfo.getTaskStatus().getState().isDone()) {
             boolean wasSet = spoolingOutputStats.compareAndSet(null, newTaskInfo.getOutputBuffers().getSpoolingOutputStats().orElse(null));
-            if (retryPolicy == RetryPolicy.TASK && wasSet && spoolingOutputStats.get() == null) {
+            if (retryPolicy == TASK && wasSet && spoolingOutputStats.get() == null) {
                 log.debug("Task %s was updated to null spoolingOutputStats. Future calls to retrieveAndDropSpoolingOutputStats will fail.", taskId);
             }
             newTaskInfo = newTaskInfo.pruneSpoolingOutputStats();
