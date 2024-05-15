@@ -27,6 +27,7 @@ public class TestDropRoleTask
         assertTrinoExceptionThrownBy(() -> executeDropRole("DROP ROLE nonexistentrole1234"))
                 .hasErrorCode(ROLE_NOT_FOUND)
                 .hasMessage("line 1:1: Role 'nonexistentrole1234' does not exist");
+        executeDropRole("DROP ROLE IF EXISTS nonexistantrole1234"); // Shouldn't throw.
     }
 
     private QueryStateMachine executeDropRole(String statement)
