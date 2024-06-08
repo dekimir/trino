@@ -46,6 +46,7 @@ connector. The following connectors support fault-tolerant execution:
 - {ref}`Iceberg connector <iceberg-fte-support>`
 - {ref}`MongoDB connector <mongodb-fte-support>`
 - {ref}`MySQL connector <mysql-fte-support>`
+- {ref}`MariaDB connector <mariadb-fte-support>`
 - {ref}`Oracle connector <oracle-fte-support>`
 - {ref}`PostgreSQL connector <postgresql-fte-support>`
 - {ref}`Redshift connector <redshift-fte-support>`
