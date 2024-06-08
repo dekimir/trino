@@ -15,10 +15,10 @@ package io.trino.plugin.mariadb;
 
 import io.trino.operator.RetryPolicy;
 
-public class TestMariaDBTaskFailureRecovery
-        extends BaseMariaDBFailureRecoveryTest
+public class TestMariaDbTaskFailureRecovery
+        extends BaseMariaDbFailureRecoveryTest
 {
-    public TestMariaDBTaskFailureRecovery()
+    public TestMariaDbTaskFailureRecovery()
     {
         super(RetryPolicy.QUERY);
     }

@@ -28,12 +28,12 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.abort;
 
-public abstract class BaseMariaDBFailureRecoveryTest
+public abstract class BaseMariaDbFailureRecoveryTest
         extends BaseJdbcFailureRecoveryTest
 {
     protected TestingMariaDbServer server;
 
-    public BaseMariaDBFailureRecoveryTest(RetryPolicy retryPolicy)
+    public BaseMariaDbFailureRecoveryTest(RetryPolicy retryPolicy)
     {
         super(retryPolicy);
     }
