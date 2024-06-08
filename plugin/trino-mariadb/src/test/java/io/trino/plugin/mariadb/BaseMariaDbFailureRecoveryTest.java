@@ -49,7 +49,8 @@ public abstract class BaseMariaDbFailureRecoveryTest
                     runner.installPlugin(new FileSystemExchangePlugin());
                     runner.loadExchangeManager("filesystem", ImmutableMap.of(
                             "exchange.base-directories", System.getProperty("java.io.tmpdir") + "/trino-local-file-system-exchange-manager"));
-                }).build();
+                })
+                .build();
     }
 
     @Test
