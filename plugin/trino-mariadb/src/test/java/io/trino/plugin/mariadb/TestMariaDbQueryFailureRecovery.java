@@ -20,6 +20,6 @@ public class TestMariaDbQueryFailureRecovery
 {
     public TestMariaDbQueryFailureRecovery()
     {
-        super(RetryPolicy.TASK);
+        super(RetryPolicy.QUERY);
     }
 }
