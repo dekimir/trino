@@ -31,8 +31,6 @@ import static org.junit.jupiter.api.Assumptions.abort;
 public abstract class BaseMariaDbFailureRecoveryTest
         extends BaseJdbcFailureRecoveryTest
 {
-    protected TestingMariaDbServer server;
-
     public BaseMariaDbFailureRecoveryTest(RetryPolicy retryPolicy)
     {
         super(retryPolicy);
@@ -42,7 +40,7 @@ public abstract class BaseMariaDbFailureRecoveryTest
     protected QueryRunner createQueryRunner(List<TpchTable<?>> requiredTpchTables, Map<String, String> configProperties, Map<String, String> coordinatorProperties)
             throws Exception
     {
-        server = closeAfterClass(new TestingMariaDbServer());
+        TestingMariaDbServer server = closeAfterClass(new TestingMariaDbServer());
         return MariaDbQueryRunner.builder(server)
                 .setInitialTables(requiredTpchTables)
                 .setExtraProperties(configProperties)
