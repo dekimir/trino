@@ -39,10 +39,10 @@ public class TestHiveFormatUtils
     @Test
     public void testTimestampFormatEscaping()
     {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() ->
+        assertThatExceptionOfType(InvalidHiveSchemaException.class).isThrownBy(() ->
                         getTimestampFormatsSchemaProperty(ImmutableMap.of(TIMESTAMP_FORMATS_KEY, "\\")))
                 .withMessageContaining("unterminated escape");
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() ->
+        assertThatExceptionOfType(InvalidHiveSchemaException.class).isThrownBy(() ->
                         getTimestampFormatsSchemaProperty(ImmutableMap.of(TIMESTAMP_FORMATS_KEY, "\\neither backslash nor comma")))
                 .withMessageContaining("Illegal escaped character");
         assertThat(getTimestampFormatsSchemaProperty(ImmutableMap.of(TIMESTAMP_FORMATS_KEY, "\\\\"))).isEqualTo(ImmutableList.of("\\"));

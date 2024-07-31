@@ -44,7 +44,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static io.trino.spi.type.DateType.DATE;
 import static io.trino.spi.type.Decimals.overflows;
 import static io.trino.spi.type.Timestamps.MILLISECONDS_PER_SECOND;
@@ -264,18 +263,15 @@ public final class HiveFormatUtils
             char c = property.charAt(position);
             if (c == TIMESTAMP_FORMATS_ESCAPE) {
                 // the next character must be an escape or separator
-                checkArgument(
-                        position + 1 < property.length(),
-                        "Invalid '%s' property value '%s': unterminated escape at end of value",
-                        TIMESTAMP_FORMATS_KEY,
-                        property);
+                if (position + 1 >= property.length()) {
+                    // TODO: include in the error message the origin of this property (eg, a Hive table from whose storage we read the property) so the user can find and fix it.
+                    throw new InvalidHiveSchemaException("Invalid '%s' property value '%s': unterminated escape at end of value", TIMESTAMP_FORMATS_KEY, property);
+                }
                 char nextCharacter = property.charAt(position + 1);
-                checkArgument(
-                        nextCharacter == TIMESTAMP_FORMATS_SEPARATOR || nextCharacter == TIMESTAMP_FORMATS_ESCAPE,
-                        "Invalid '%s' property value '%s': Illegal escaped character at %s",
-                        TIMESTAMP_FORMATS_KEY,
-                        property,
-                        position);
+                if (nextCharacter != TIMESTAMP_FORMATS_SEPARATOR && nextCharacter != TIMESTAMP_FORMATS_ESCAPE) {
+                    // TODO: include in the error message the origin of this property (eg, a Hive table from whose storage we read the property) so the user can find and fix it.
+                    throw new InvalidHiveSchemaException("Invalid '%s' property value '%s': Illegal escaped character at %s", TIMESTAMP_FORMATS_KEY, property, position);
+                }
 
                 buffer.append(nextCharacter);
                 position++;
