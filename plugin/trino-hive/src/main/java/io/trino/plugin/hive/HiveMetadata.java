@@ -32,6 +32,7 @@ import io.trino.filesystem.FileIterator;
 import io.trino.filesystem.Location;
 import io.trino.filesystem.TrinoFileSystem;
 import io.trino.filesystem.TrinoFileSystemFactory;
+import io.trino.hive.formats.InvalidHiveSchemaException;
 import io.trino.metastore.AcidOperation;
 import io.trino.metastore.Column;
 import io.trino.metastore.Database;
@@ -187,6 +188,7 @@ import static io.trino.plugin.hive.HiveErrorCode.HIVE_COLUMN_ORDER_MISMATCH;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_CONCURRENT_MODIFICATION_DETECTED;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_FILESYSTEM_ERROR;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_INVALID_METADATA;
+import static io.trino.plugin.hive.HiveErrorCode.HIVE_INVALID_SCHEMA;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_INVALID_VIEW_DATA;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_UNKNOWN_ERROR;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_UNSUPPORTED_FORMAT;
@@ -2003,23 +2005,28 @@ public class HiveMetadata
         }
 
         for (String fileName : fileNames) {
-            Location location = path.appendPath(fileName);
-            fileWriterFactories.stream()
-                    .map(factory -> factory.createFileWriter(
-                            location,
-                            ImmutableList.of(),
-                            format,
-                            HiveCompressionCodec.NONE,
-                            schema,
-                            session,
-                            OptionalInt.empty(),
-                            NO_ACID_TRANSACTION,
-                            false,
-                            WriterKind.INSERT))
-                    .flatMap(Optional::stream)
-                    .findFirst()
-                    .orElseThrow(() -> new TrinoException(HIVE_UNSUPPORTED_FORMAT, "Writing not supported for " + format))
-                    .commit();
+            try {
+                Location location = path.appendPath(fileName);
+                fileWriterFactories.stream()
+                        .map(factory -> factory.createFileWriter(
+                                location,
+                                ImmutableList.of(),
+                                format,
+                                HiveCompressionCodec.NONE,
+                                schema,
+                                session,
+                                OptionalInt.empty(),
+                                NO_ACID_TRANSACTION,
+                                false,
+                                WriterKind.INSERT))
+                        .flatMap(Optional::stream)
+                        .findFirst()
+                        .orElseThrow(() -> new TrinoException(HIVE_UNSUPPORTED_FORMAT, "Writing not supported for " + format))
+                        .commit();
+            }
+            catch (InvalidHiveSchemaException e) {
+                throw new TrinoException(HIVE_INVALID_SCHEMA, e);
+            }
         }
     }
 

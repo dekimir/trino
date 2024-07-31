@@ -24,6 +24,7 @@ import io.airlift.units.DataSize;
 import io.trino.filesystem.Location;
 import io.trino.filesystem.TrinoFileSystem;
 import io.trino.filesystem.TrinoFileSystemFactory;
+import io.trino.hive.formats.InvalidHiveSchemaException;
 import io.trino.hive.formats.compression.CompressionKind;
 import io.trino.metastore.Column;
 import io.trino.metastore.HiveType;
@@ -75,6 +76,7 @@ import static io.trino.metastore.AcidOperation.CREATE_TABLE;
 import static io.trino.plugin.hive.HiveCompressionCodecs.selectCompressionCodec;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_FILESYSTEM_ERROR;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_INVALID_METADATA;
+import static io.trino.plugin.hive.HiveErrorCode.HIVE_INVALID_SCHEMA;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_PARTITION_READ_ONLY;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_PARTITION_SCHEMA_MISMATCH;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_PATH_ALREADY_EXISTS;
@@ -480,23 +482,28 @@ public class HiveWriterFactory
         }
         else {
             for (HiveFileWriterFactory fileWriterFactory : fileWriterFactories) {
-                Optional<FileWriter> fileWriter = fileWriterFactory.createFileWriter(
-                        path,
-                        dataColumns.stream()
-                                .map(DataColumn::getName)
-                                .collect(toList()),
-                        outputStorageFormat,
-                        compressionCodec,
-                        schema,
-                        session,
-                        bucketNumber,
-                        transaction,
-                        useAcidSchema,
-                        WriterKind.INSERT);
+                try {
+                    Optional<FileWriter> fileWriter = fileWriterFactory.createFileWriter(
+                            path,
+                            dataColumns.stream()
+                                    .map(DataColumn::getName)
+                                    .collect(toList()),
+                            outputStorageFormat,
+                            compressionCodec,
+                            schema,
+                            session,
+                            bucketNumber,
+                            transaction,
+                            useAcidSchema,
+                            WriterKind.INSERT);
 
-                if (fileWriter.isPresent()) {
-                    hiveFileWriter = fileWriter.get();
-                    break;
+                    if (fileWriter.isPresent()) {
+                        hiveFileWriter = fileWriter.get();
+                        break;
+                    }
+                }
+                catch (InvalidHiveSchemaException e) {
+                    throw new TrinoException(HIVE_INVALID_SCHEMA, e);
                 }
             }
         }

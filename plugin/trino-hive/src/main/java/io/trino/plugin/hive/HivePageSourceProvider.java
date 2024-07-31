@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import io.trino.filesystem.Location;
+import io.trino.hive.formats.InvalidHiveSchemaException;
 import io.trino.metastore.HiveType;
 import io.trino.metastore.HiveTypeName;
 import io.trino.metastore.type.TypeInfo;
@@ -63,6 +64,7 @@ import static io.trino.plugin.hive.HiveColumnHandle.ColumnType.PARTITION_KEY;
 import static io.trino.plugin.hive.HiveColumnHandle.ColumnType.REGULAR;
 import static io.trino.plugin.hive.HiveColumnHandle.ColumnType.SYNTHESIZED;
 import static io.trino.plugin.hive.HiveColumnHandle.isRowIdColumnHandle;
+import static io.trino.plugin.hive.HiveErrorCode.HIVE_INVALID_SCHEMA;
 import static io.trino.plugin.hive.HiveErrorCode.HIVE_UNSUPPORTED_FORMAT;
 import static io.trino.plugin.hive.HivePageSourceProvider.ColumnMapping.toColumnHandles;
 import static io.trino.plugin.hive.HivePageSourceProvider.ColumnMappingKind.PREFILLED;
@@ -199,37 +201,42 @@ public class HivePageSourceProvider
         for (HivePageSourceFactory pageSourceFactory : pageSourceFactories) {
             List<HiveColumnHandle> desiredColumns = toColumnHandles(regularAndInterimColumnMappings, typeManager, coercionContext);
 
-            Optional<ReaderPageSource> readerWithProjections = pageSourceFactory.createPageSource(
-                    session,
-                    path,
-                    start,
-                    length,
-                    estimatedFileSize,
-                    schema,
-                    desiredColumns,
-                    effectivePredicate,
-                    acidInfo,
-                    tableBucketNumber,
-                    originalFile,
-                    transaction);
+            try {
+                Optional<ReaderPageSource> readerWithProjections = pageSourceFactory.createPageSource(
+                        session,
+                        path,
+                        start,
+                        length,
+                        estimatedFileSize,
+                        schema,
+                        desiredColumns,
+                        effectivePredicate,
+                        acidInfo,
+                        tableBucketNumber,
+                        originalFile,
+                        transaction);
 
-            if (readerWithProjections.isPresent()) {
-                ConnectorPageSource pageSource = readerWithProjections.get().get();
+                if (readerWithProjections.isPresent()) {
+                    ConnectorPageSource pageSource = readerWithProjections.get().get();
 
-                Optional<ReaderColumns> readerProjections = readerWithProjections.get().getReaderColumns();
-                Optional<ReaderProjectionsAdapter> adapter = Optional.empty();
-                if (readerProjections.isPresent()) {
-                    adapter = Optional.of(hiveProjectionsAdapter(desiredColumns, readerProjections.get()));
+                    Optional<ReaderColumns> readerProjections = readerWithProjections.get().getReaderColumns();
+                    Optional<ReaderProjectionsAdapter> adapter = Optional.empty();
+                    if (readerProjections.isPresent()) {
+                        adapter = Optional.of(hiveProjectionsAdapter(desiredColumns, readerProjections.get()));
+                    }
+
+                    return Optional.of(new HivePageSource(
+                            columnMappings,
+                            bucketAdaptation,
+                            bucketValidator,
+                            adapter,
+                            typeManager,
+                            coercionContext,
+                            pageSource));
                 }
-
-                return Optional.of(new HivePageSource(
-                        columnMappings,
-                        bucketAdaptation,
-                        bucketValidator,
-                        adapter,
-                        typeManager,
-                        coercionContext,
-                        pageSource));
+            }
+            catch (InvalidHiveSchemaException e) {
+                throw new TrinoException(HIVE_INVALID_SCHEMA, e);
             }
         }
 
