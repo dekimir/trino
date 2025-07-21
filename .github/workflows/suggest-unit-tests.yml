@@ -1,0 +1,17 @@
+name: suggest-unit-tests
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  comment-responder:
+    runs-on: ubuntu-latest
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '/suggest-unit-tests')
+    steps:
+      - name: 'Comment on PR'
+        run: |
+          gh pr comment ${{ github.event.issue.number }} --body "Hello from the default token! 👋"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
