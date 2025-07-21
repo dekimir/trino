@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.issue.pull_request && contains(github.event.comment.body, '/suggest-unit-tests')
     steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v2
       - name: 'Get PR diff'
         id: get_diff
         run: |
