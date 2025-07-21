@@ -9,9 +9,25 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.issue.pull_request && contains(github.event.comment.body, '/suggest-unit-tests')
     steps:
+      - name: 'Get PR diff'
+        id: get_diff
+        run: |
+          DFILE="diff${{ github.event.issue.number }}.txt"
+          gh pr diff ${{ github.event.issue.number }} > $DFILE
+          echo "DFILE=$DFILE" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}'
+      - name: 'Run unit test suggestion script'
+        run: |
+          COMMENT=$(python3 .github/bin/suggest_unit_tests.py ${{ env.DFILE }})
+          echo "COMMENT=$COMMENT" >> $GITHUB_ENV
+        env:
+          DFILE: ${{ env.DFILE }}
+          AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}'
       - name: 'Comment on PR'
         run: |
-          gh pr comment ${{ github.event.issue.number }} --body "Hello from the default token! 👋"
+          gh pr comment ${{ github.event.issue.number }} --body `cat ${{ env.COMMENT }}`
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
+          COMMENT: ${{ env.COMMENT }}
