@@ -34,6 +34,7 @@ import static io.trino.plugin.iceberg.IcebergErrorCode.ICEBERG_INVALID_METADATA;
 import static io.trino.testing.TestingConnectorSession.SESSION;
 import static io.trino.testing.assertions.TrinoExceptionAssert.assertTrinoExceptionThrownBy;
 
+// Contains basic tests for Iceberg table operations that are not specific to any particular file system.
 public class TestAbstractIcebergTableOperations
 {
     @Test
