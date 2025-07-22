@@ -14,6 +14,8 @@ jobs:
           PR=${{ github.event.issue.number }}
           gh pr diff $PR >& diff$PR
           gh api repos/dekimir/trino/contents/.github/bin/suggest_unit_tests.py --jq '.content' | base64 -d > script.py
+          pip install --upgrade boto3
+          pip show boto3
           python3 script.py diff$PR | tee rec$PR
           gh pr comment $PR -F rec$PR
         env:
