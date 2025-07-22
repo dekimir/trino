@@ -11,6 +11,7 @@ jobs:
     steps:
       - name: 'Comment on PR'
         run: |
+          gh pr diff ${{ github.event.issue.number }}
           gh pr comment ${{ github.event.issue.number }} --body "Hello from the default token! 👋"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
